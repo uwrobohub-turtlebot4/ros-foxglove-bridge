@@ -581,35 +581,10 @@ private:
       depth = std::min(_maxQosDepth, depth + qos.depth());
     }
 
-    rclcpp::QoS qos{rclcpp::KeepLast(std::max(depth, _minQosDepth))};
+    rclcpp::QoS qos{rclcpp::KeepLast(1)};
 
-    // If all endpoints are reliable, ask for reliable
-    if (reliabilityReliableEndpointsCount == publisherInfo.size()) {
-      qos.reliable();
-    } else {
-      if (reliabilityReliableEndpointsCount > 0) {
-        RCLCPP_WARN(
-          this->get_logger(),
-          "Some, but not all, publishers on topic '%s' are offering QoSReliabilityPolicy.RELIABLE. "
-          "Falling back to QoSReliabilityPolicy.BEST_EFFORT as it will connect to all publishers",
-          topic.c_str());
-      }
-      qos.best_effort();
-    }
-
-    // If all endpoints are transient_local, ask for transient_local
-    if (durabilityTransientLocalEndpointsCount == publisherInfo.size()) {
-      qos.transient_local();
-    } else {
-      if (durabilityTransientLocalEndpointsCount > 0) {
-        RCLCPP_WARN(this->get_logger(),
-                    "Some, but not all, publishers on topic '%s' are offering "
-                    "QoSDurabilityPolicy.TRANSIENT_LOCAL. Falling back to "
-                    "QoSDurabilityPolicy.VOLATILE as it will connect to all publishers",
-                    topic.c_str());
-      }
-      qos.durability_volatile();
-    }
+    qos.best_effort();
+    qos.durability_volatile();
 
     if (firstSubscription) {
       RCLCPP_INFO(this->get_logger(), "Subscribing to topic \"%s\" (%s) on channel %d",
