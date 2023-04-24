@@ -675,6 +675,9 @@ private:
   }
 
   void clientAdvertise(const foxglove::ClientAdvertisement& advertisement, ConnectionHandle hdl) {
+	  RCLCPP_WARN(this->get_logger(),
+			  "Client advertisement for topic %s",
+			  advertisement.topic.c_str());
     std::lock_guard<std::mutex> lock(_clientAdvertisementsMutex);
 
     // Get client publications or insert an empty map.
@@ -696,18 +699,7 @@ private:
       const auto& topicName = advertisement.topic;
       const auto& topicType = advertisement.schemaName;
 
-      // Lookup if there are publishers from other nodes for that topic. If that's the case, we use
-      // a matching QoS profile.
-      const auto otherPublishers = get_publishers_info_by_topic(topicName);
-      const auto otherPublisherIt =
-        std::find_if(otherPublishers.begin(), otherPublishers.end(),
-                     [this](const rclcpp::TopicEndpointInfo& endpoint) {
-                       return endpoint.node_name() != this->get_name() ||
-                              endpoint.node_namespace() != this->get_namespace();
-                     });
-      const rclcpp::QoS qos = otherPublisherIt == otherPublishers.end()
-                                ? rclcpp::SystemDefaultsQoS()
-                                : otherPublisherIt->qos_profile();
+      const rclcpp::QoS qos = rclcpp::SystemDefaultsQoS();
       rclcpp::PublisherOptions publisherOptions{};
       publisherOptions.callback_group = _clientPublishCallbackGroup;
       auto publisher = this->create_generic_publisher(topicName, topicType, qos, publisherOptions);
@@ -718,6 +710,8 @@ private:
 
       // Store the new topic advertisement
       clientPublications.emplace(advertisement.channelId, std::move(publisher));
+      RCLCPP_WARN(this->get_logger(),
+		      "Got channelId %d", advertisement.channelId);
     } catch (const std::exception& ex) {
       RCLCPP_ERROR(this->get_logger(), "Failed to create publisher: %s", ex.what());
       return;
