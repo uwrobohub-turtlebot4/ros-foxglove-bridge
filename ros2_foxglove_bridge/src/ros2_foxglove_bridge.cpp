@@ -674,7 +674,8 @@ private:
       const auto& topicName = advertisement.topic;
       const auto& topicType = advertisement.schemaName;
 
-      const rclcpp::QoS qos = rclcpp::SystemDefaultsQoS();
+      rclcpp::QoS qos = rclcpp::SystemDefaultsQoS();
+      qos.durability_volatile();
       rclcpp::PublisherOptions publisherOptions{};
       publisherOptions.callback_group = _clientPublishCallbackGroup;
       auto publisher = this->create_generic_publisher(topicName, topicType, qos, publisherOptions);
